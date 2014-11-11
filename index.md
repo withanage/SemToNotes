@@ -16,7 +16,7 @@ This page contains demo applications informing about the technical milestones re
 The graphical editor of SemToNotes combines the features of a pan-zoom-rotate image viewer with those of a drawing application.
 
 ### 1.1 User Interface
-The graphical editor supports all three browser rendering engines, Canvas, SVG and VML.
+The graphical editor supports all common desktop and mobile tablet browsers (optionally Canvas, SVG or VML rendering). In supporting Internet Explorer before version 9 as well as modern mobile touchpad devices, SemToNotes is compatible with the stricter accessibility guidelines of public institutions.
 
 * [Canvas Rendering](./milestone/rendering-canvas)
 * [SVG Rendering](./milestone/rendering-svg)
