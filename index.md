@@ -29,15 +29,16 @@ The graphical editor supports arbitrary XML standards such as the [Text Encoding
 * Shared Canvas Example
 
 ### 1.3 User Interface Description Language (UIDL)
-SemToNotes can be easily integrated into any web page in a descriptive way with HTML5 elements only without writing any additional JavaScript.
+SemToNotes can be integrated into any web page in a descriptive way with HTML5 elements only.
 
-* Loading XML instances
-* Declaring data bindings
-* a background image
-* Rendering graphics
-* Modifying existing graphics
-* Creating new graphics
-* A complete example
+* Loading XML Instances
+* Declare Data Bindings
+* Define a Background Image
+* Render Graphics
+* Styling Graphics
+* Modify Existing Graphics
+* Create New Graphics
+* A Complete Example
 
 # Contact
 jochen.graf(at)uni-koeln.de
