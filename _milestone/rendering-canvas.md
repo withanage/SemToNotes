@@ -1,7 +1,7 @@
 ---
 layout: milestone
 title: Canvas Rendering | SemToNotes
-tagline: A combined image-viewer and drawing-tool using the browser's canvas rendering engine.
+tagline: Demonstrating the [Canvas](http://www.w3.org/TR/2014/CR-2dcontext-20140821/) rendering engine.
 engine: canvas
 ---
 
