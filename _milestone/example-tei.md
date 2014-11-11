@@ -1,7 +1,7 @@
 ---
 layout: milestone
 title: TEI Example | SemToNotes
-tagline: Support for arbitrary XML standards such as the Text Encoding Initiative (TEI).
+tagline: A TEI Facsimile Image Annotation Tool.
 ---
 
 <div class="xrx-mvc-namespace" data-xrx-prefix="xmlns:tei" data-xrx-uri="http://www.tei-c.org/ns/1.0"></div>
