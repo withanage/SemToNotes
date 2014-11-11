@@ -1,0 +1,7 @@
+markdown: kramdown
+highlighter: pygments
+
+
+collections:
+  milestone:
+    output: true
