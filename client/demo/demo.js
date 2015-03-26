@@ -31,7 +31,6 @@ demo.rendering = function(engine) {
 };
 
 
-
 demo.renderingCanvas.install = function() {
   demo.rendering(xrx.engine.CANVAS);
   return true;
