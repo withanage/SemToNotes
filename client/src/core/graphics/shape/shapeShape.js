@@ -25,6 +25,12 @@ xrx.shape.Shape = function(drawing) {
    */
   this.engineShape_;
 
+  /**
+   * Whether the shape is set modifiable. Deafault is true.
+   * @type {boolean}
+   */
+  this.isModifiable_ = true;
+
   this.create_();
 };
 
@@ -46,6 +52,27 @@ xrx.shape.Shape.prototype.getDrawing = function() {
  */
 xrx.shape.Shape.prototype.getEngineShape = function() {
   return this.engineShape_;
+};
+
+
+
+/**
+ * Sets whether the shape shall be modifiable or not. Defaults
+ * to true.
+ * @param {boolean} Whether modifiable or not, defaults to true.
+ */
+xrx.shape.Shape.prototype.setModifiable = function(modifiable) {
+  modifiable === false ? this.isModifiable_ = false : this.isModifiable_ = true;
+};
+
+
+
+/**
+ * Whether this shape is set modifiable.
+ * @return {boolean} Is modifiable.
+ */
+xrx.shape.Shape.prototype.isModifiable = function() {
+  return this.isModifiable_;
 };
 
 
@@ -168,6 +195,6 @@ xrx.shape.Shape.prototype.create_ = function() {
   var primitiveShape = this.drawing_.getGraphics()[this.engineClass_];
   this.engineShape_ = primitiveShape.create(this.drawing_.getCanvas());
   this.engineShape_.setStrokeColor('#47D1FF');
-  this.engineShape_.setStrokeWidth(1.);
+  this.engineShape_.setStrokeWidth(3.);
   this.engineShape_.setFillOpacity(0.);
 };

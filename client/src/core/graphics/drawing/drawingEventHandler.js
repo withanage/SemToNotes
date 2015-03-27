@@ -6,6 +6,8 @@ goog.provide('xrx.drawing.EventHandler');
 
 
 
+goog.require('goog.style');
+goog.require('xrx.drawing');
 goog.require('xrx.drawing.EventTarget');
 
 
@@ -25,8 +27,18 @@ goog.inherits(xrx.drawing.EventHandler, xrx.drawing.EventTarget);
  *
  */
 xrx.drawing.EventHandler.prototype.getEventPoint = function(e) {
-  var pos = goog.style.getPosition(this.element_);
-  var eventPoint = [e.clientX - pos.x, e.clientY - pos.y];
+  var pos = goog.style.getClientPosition(this.canvas_.getEventTarget());
+  var touches = e.getBrowserEvent().changedTouches;
+  var x;
+  var y;
+  if (touches) {
+    x = touches[0].clientX;
+    y = touches[0].clientY;
+  } else {
+    x = e.clientX;
+    y = e.clientY;
+  }
+  var eventPoint = [x - pos.x, y - pos.y];
   var point = new Array(2);
   this.getViewbox().getCTM().createInverse().transform(eventPoint, 0, point, 0, 1);
   return point;

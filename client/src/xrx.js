@@ -1,13 +1,18 @@
 /**
- * @fileoverview XRX main class.
+ * @fileoverview The XRX++ main class.
  */
 
 goog.provide('xrx');
 
 
 
-xrx = function() {};
+goog.require('xrx.func');
+goog.require('xrx.mvc');
+goog.require('xrx.mvc.Components');
+goog.require('xrx.mvc.Mvc');
 
 
 
-goog.exportSymbol('xrx', xrx);
+xrx.install = function(opt_callback) {
+  xrx.mvc.Mvc.install(undefined, opt_callback);
+};

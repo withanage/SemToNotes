@@ -11,7 +11,8 @@ goog.require('goog.dom.ViewportSizeMonitor');
 goog.require('goog.events');
 goog.require('goog.events.EventType');
 goog.require('goog.net.ImageLoader');
-goog.require('xrx');
+goog.require('goog.style');
+goog.require('goog.userAgent');
 goog.require('xrx.canvas');
 goog.require('xrx.drawing');
 goog.require('xrx.drawing.EventHandler');
@@ -22,6 +23,7 @@ goog.require('xrx.drawing.LayerShapeModify');
 goog.require('xrx.drawing.LayerTool');
 goog.require('xrx.drawing.Mode');
 goog.require('xrx.drawing.Modifiable');
+goog.require('xrx.drawing.Selectable');
 goog.require('xrx.drawing.State');
 goog.require('xrx.drawing.Viewbox');
 goog.require('xrx.engine');
@@ -94,6 +96,13 @@ xrx.drawing.Drawing = function(element, opt_engine) {
    * @private
    */
   this.modifiable_ = new xrx.drawing.Modifiable(this);
+
+  /**
+   * The shape currently selected by the user.
+   * @type {?}
+   * @private
+   */
+  this.selectable_ = new xrx.drawing.Selectable(this);
 
   /**
    * The shape currently created by the user.
@@ -222,6 +231,16 @@ xrx.drawing.Drawing.prototype.getLayerTool = function() {
 
 
 /**
+ * Returns the shape currently created by the user.
+ * @return {xrx.shape.Shape} The shape.
+ */
+xrx.drawing.Drawing.prototype.getCreate = function() {
+  return this.create_;
+};
+
+
+
+/**
  * Returns the view-box of the drawing canvas.
  * @return {Object} The view-box.
  */
@@ -254,12 +273,13 @@ xrx.drawing.Drawing.prototype.isValidBBox = function(bbox) {
 
 
 xrx.drawing.Drawing.prototype.setBackgroundImage = function(url, callback) {
+  var img = this.layer_[0].getImage().getImage();
+  if (img && img.src === url) return;
   var self = this;
   var imageLoader = new goog.net.ImageLoader();
   var tmpImage = goog.dom.createElement('img');
   tmpImage.id = '_tmp';
   tmpImage.src = url;
-
   goog.events.listen(imageLoader, goog.events.EventType.LOAD, function(e) {
     self.layer_[0].setImage(e.target);
     self.draw();
@@ -292,6 +312,16 @@ xrx.drawing.Drawing.prototype.draw = function() {
   } else {
     throw Error('Unknown engine.');
   }
+};
+
+
+
+/**
+ * Returns the mode.
+ * @return {number} The mode.
+ */
+xrx.drawing.Drawing.prototype.getMode = function() {
+  return this.mode_;
 };
 
 
@@ -340,8 +370,8 @@ xrx.drawing.Drawing.prototype.setModeView = function() {
 
 
 /**
- * Switch the drawing canvas over into mode <i>hover</i> to allow view-box panning
- * zooming and rotating.
+ * Switch the drawing canvas over into mode <i>hover</i> to allow hovering
+ * shapes.
  */
 xrx.drawing.Drawing.prototype.setModeHover = function() {
   this.getLayerBackground().setLocked(false);
@@ -350,7 +380,23 @@ xrx.drawing.Drawing.prototype.setModeHover = function() {
   this.getLayerShapeCreate().setLocked(true);
   this.getLayerShapeModify().removeShapes();
   this.getLayerShapeCreate().removeShapes();
-  this.setMode_(xrx.drawing.Mode.VIEW);
+  this.setMode_(xrx.drawing.Mode.HOVER);
+};
+
+
+
+/**
+ * Switch the drawing canvas over into mode <i>select</i> to allow selecting
+ * shapes.
+ */
+xrx.drawing.Drawing.prototype.setModeSelect = function() {
+  this.getLayerBackground().setLocked(true);
+  this.getLayerShape().setLocked(false);
+  this.getLayerShapeModify().setLocked(true);
+  this.getLayerShapeCreate().setLocked(true);
+  this.getLayerShapeModify().removeShapes();
+  this.getLayerShapeCreate().removeShapes();
+  this.setMode_(xrx.drawing.Mode.SELECT);
 };
 
 
@@ -401,12 +447,16 @@ xrx.drawing.Drawing.prototype.setModeCreate = function(shape) {
   this.getLayerShapeCreate().setLocked(false);
   this.getLayerShapeModify().removeShapes();
   this.getLayerShapeCreate().removeShapes();
-
-  this.create_ = new xrx.shape[shape](this);
+  this.create_ = shape instanceof String ? new xrx.shape[shape](this) : shape;
   if (this.drawEvent_) goog.events.unlistenByKey(this.drawEvent_);
   this.drawEvent_ = goog.events.listen(self.canvas_.getElement(),
-      goog.events.EventType.CLICK,
-      function(e) { if (self.mode_ === xrx.drawing.Mode.CREATE) self.create_.handleClick(e); }
+      xrx.drawing.EventType.DOWN,
+      function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (self.mode_ === xrx.drawing.Mode.CREATE) self.create_.handleClick(e);
+      },
+      true
   );
   this.setMode_(xrx.drawing.Mode.CREATE);
 };
@@ -526,6 +576,7 @@ xrx.drawing.Drawing.prototype.installFallback_ = function(opt_engine) {
   var span = goog.dom.createElement('span');
   goog.dom.setTextContent(span, 'Your browser does not support ' + opt_engine +
       ' rendering.');
+  goog.dom.classes.add(span, 'xrx-canvas-error');
   goog.dom.appendChild(this.element_, span);
 };
 
@@ -547,7 +598,6 @@ xrx.drawing.Drawing.prototype.install_ = function(opt_engine) {
 
   // initialize the graphics rendering engine
   this.initEngine_(opt_engine);
-  console.log(this.engine_.isAvailable());
 
   if (this.engine_.isAvailable()) {
     // install the drawing canvas
@@ -567,6 +617,17 @@ xrx.drawing.Drawing.prototype.install_ = function(opt_engine) {
 
     // install the tool layer
     this.installLayerTool_();
+
+    if (goog.userAgent.IE && !goog.userAgent.isVersionOrHigher(9)) {
+      // IE 7 and IE 8 z-index fix
+      var divs = goog.dom.getElementsByTagNameAndClass('div', undefined, this.element_);
+      var zIndex = 1000;
+      goog.array.forEach(divs, function(e, i, a) {
+        goog.style.setStyle(e, 'z-index', zIndex);
+        zIndex -= 10;
+      })
+    };
+
   } else {
     // install an unavailable message
     this.installFallback_(opt_engine);

@@ -48,11 +48,16 @@ xrx.drawing.Modifiable.Mode = {
 
 
 xrx.drawing.Modifiable.prototype.handleDown = function(e) {
-  this.state_ = xrx.drawing.State.DRAG;
   var modifier;
   var modifiable;
   this.mousePoint_ = this.drawing_.getEventPoint(e);
   modifier = this.drawing_.getShapeSelected(this.mousePoint_);
+
+  if (modifier && modifier.isModifiable()) {
+    this.state_ = xrx.drawing.State.DRAG;
+  } else {
+    return;
+  }
 
   if (!modifier) {
     this.drawing_.getLayerShapeModify().removeShapes();
@@ -80,7 +85,7 @@ xrx.drawing.Modifiable.prototype.handleMove = function(e) {
     this.originCoords_ = this.shapeOriginCoords_;
   }
 
-  var eventPoint = [e.offsetX, e.offsetY];
+  var point = this.drawing_.getEventPoint(e);
   var bboxA = this.drawing_.getViewbox().getBox();
   var diff = {
     x: 0,
@@ -89,10 +94,7 @@ xrx.drawing.Modifiable.prototype.handleMove = function(e) {
     y2: 0
   };
   var bboxS;
-  var point = new Array(2);
   this.coords_ = new Array(this.originCoords_.length);
-
-  this.drawing_.getViewbox().getCTM().createInverse().transform(eventPoint, 0, point, 0, 1);
 
   for (var i = 0, len = this.originCoords_.length; i < len; i++) {
     this.coords_[i] = new Array(2);
@@ -122,6 +124,7 @@ xrx.drawing.Modifiable.prototype.handleMove = function(e) {
     this.shape_.setCoords(this.coords_);
     this.drawing_.getLayerShapeModify().update(this.shape_.getCoords());
   }
+  if (this.shape_.handleValueChanged) this.shape_.handleValueChanged();
 };
 
 
@@ -133,16 +136,15 @@ xrx.drawing.Modifiable.prototype.handleUp = function(e) {
 
 
 xrx.drawing.Modifiable.prototype.handleClick = function(e) {
-  var eventPoint = [e.offsetX, e.offsetY];
-  this.drawing_.getViewbox().getCTM().createInverse().transform(eventPoint, 0,
-      this.mousePoint_, 0, 1);
   var drawing = this.drawing_;
+  if (drawing.getMode() !== xrx.drawing.Mode.DELETE) return;
+  this.mousePoint_ = drawing.getEventPoint(e);
   var shape = drawing.getShapeSelected(this.mousePoint_);
-
-  if (shape) {
+  if (shape && shape.isModifiable()) {
     drawing.getLayerShapeModify().activate(shape.getVertexDraggers());
     var confirm = window.confirm('Delete forever?');
     if (confirm) {
+      if (shape.handleDeleted) shape.handleDeleted();
       drawing.getLayerShape().removeShape(shape);
       drawing.getLayerShapeModify().removeShapes();
     }

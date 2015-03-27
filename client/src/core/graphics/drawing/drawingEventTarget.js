@@ -18,13 +18,15 @@ goog.require('goog.events.MouseWheelHandler.EventType');
 goog.require('goog.math');
 goog.require('goog.style');
 goog.require('goog.userAgent');
+goog.require('xrx.drawing');
 goog.require('xrx.drawing.Mode');
 goog.require('xrx.shape.Shapes');
 
 
 
 xrx.drawing.EventType = {
-  CLICK: goog.events.EventType.CLICK, //TODO: mobile event?
+  CLICK: goog.userAgent.MOBILE ? goog.events.EventType.TOUCHSTART :
+        goog.events.EventType.CLICK,
   DBLCLICK: goog.events.EventType.DBLCLICK, //TODO: mobile event?
   DOWN: goog.userAgent.MOBILE ? goog.events.EventType.TOUCHSTART :
             goog.events.EventType.MOUSEDOWN,
@@ -57,6 +59,8 @@ xrx.drawing.Event = {
  */
 xrx.drawing.EventTarget = function() {
 
+  goog.base(this);
+
   this.handler_ = new goog.events.EventHandler(this);
 
   this.keyClick_;
@@ -85,7 +89,7 @@ xrx.drawing.EventTarget.prototype.getHandler = function() {
 
 xrx.drawing.EventTarget.prototype.registerEvent_ = function(e, handler, event) {
   // re-initialize the browser event in the case of mobile touch events
-  if (goog.userAgent.MOBILE) 
+  if (e.getBrowserEvent().changedTouches) 
       e.init(e.getBrowserEvent().changedTouches[0], e.currentTarget);
   e.preventDefault();
   e.stopPropagation();
@@ -185,6 +189,7 @@ xrx.drawing.EventTarget.prototype.registerUp_ = function(handler) {
 
 
 xrx.drawing.EventTarget.prototype.registerWheel = function(handler) {
+  if (goog.userAgent.MOBILE) return;
   var self = this;
   var mwh = new goog.events.MouseWheelHandler(self.canvas_.getEventTarget());
   if (!this.keyWheel_) this.keyWheel_ = this.handler_.listen(mwh, xrx.drawing.EventType.ZOOM,
@@ -233,6 +238,10 @@ xrx.drawing.EventTarget.prototype.registerEvents = function(mode) {
     this.registerDblClick(this.viewbox_);
     this.registerDrag(this.viewbox_);
     this.registerOut(this.viewbox_);
+    this.registerWheel(this.viewbox_);
+    break;
+  case xrx.drawing.Mode.SELECT:
+    this.registerClick(this.selectable_);
     this.registerWheel(this.viewbox_);
     break;
   case xrx.drawing.Mode.MODIFY:
